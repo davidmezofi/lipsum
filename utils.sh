@@ -1,5 +1,11 @@
 #! /bin/sh
 
+# Copyright 2021 Dávid Csaba Mezőfi
+
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and
+# this notice are preserved.  This file is offered as-is, without any warranty.
+
 # List all the distinct words (ignore cases) in the files
 distinctwords() {
     cat lipsum.txt definibus.1.10.32.txt definibus.1.10.33.txt | \
