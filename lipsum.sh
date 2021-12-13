@@ -252,7 +252,8 @@ prettify() {
 }
 
 punctuation() {
-    case "$1" in
+    INDEX=$(myrandom 7 0)
+    case "$INDEX" in
         0 | 1 | 2 | 3 | 4 | 5) printf "."
             ;;
         6) printf "?"
@@ -276,7 +277,7 @@ printrandompar() {
             randomword
             NWORDS=$((NWORDS - 1))
         done
-        punctuation "$(myrandom 7 0)"
+        punctuation
         NSENTENCE=$((NSENTENCE - 1))
     done
 }
