@@ -251,12 +251,6 @@ prettify() {
     echo
 }
 
-toupper() {
-    FIRSTC=$(echo "$1" | cut -c 1 | tr '[:lower:]' '[:upper:]') 
-    REST=$(echo "$1" | cut -c 2-)
-    printf "%s%s" "$FIRSTC" "$REST"
-}
-
 punctuation() {
     case "$1" in
         0 | 1 | 2 | 3 | 4 | 5) printf "."
@@ -273,12 +267,13 @@ printrandompar() {
     do
         # In the original sentences there are 8-29 words. (The 40 word sentence
         # is an outlier, check with a boxplot.)
-        NWORDS=$(myrandom 22 8)
+        NWORDS=$(myrandom 21 8)
         printf "  "
-        toupper "$(randomword)"
+        randomword | sed -e "s/\(.*\)/\u\1/"
         while [ "$NWORDS" -gt 0 ]
         do
-            printf " %s" "$(randomword)"
+            printf " "
+            randomword
             NWORDS=$((NWORDS - 1))
         done
         punctuation "$(myrandom 7 0)"
@@ -299,14 +294,14 @@ printpars() {
         done
     }
 
-    SCRIPTNAME=$(basename "$0")
+SCRIPTNAME=$(basename "$0")
 
-    usage() {
-        echo "Usage: $SCRIPTNAME [ -p POSINT ]" >&2
-    }
+usage() {
+    echo "Usage: $SCRIPTNAME [ -p POSINT ]" >&2
+}
 
-    # If there was no argument given, then just printlipsum and exit
-    [ -z "$*" ] && printlipsum | prettify && exit 0
+# If there was no argument given, then just printlipsum and exit
+[ -z "$*" ] && printlipsum | prettify && exit 0
 
 # We need it to be set, otherwise later the checks will complain
 NPAR=0
