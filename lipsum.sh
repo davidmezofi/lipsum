@@ -14,8 +14,14 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-word() {
-    case "$1" in
+myrandom() {
+    SEED=$(od -A n -N 2 -d /dev/urandom)
+    echo "$(($2 + SEED % $1))"
+}
+
+randomword() {
+    INDEX=$(myrandom 210 0)
+    case "$INDEX" in
         0) printf "a";;
         1) printf "ab";;
         2) printf "accusamus";;
@@ -241,7 +247,7 @@ EOF
 }
 
 prettify() {
-    tr '\n' ' ' | sed -e "s/ \{2,\}/ /g" | fold -s
+    tr '\n' ' ' | sed -e "s/^ *//; s/ \{2,\}/  /g" | fold -s
     echo
 }
 
@@ -253,32 +259,29 @@ toupper() {
 
 punctuation() {
     case "$1" in
-        0 | 1 | 2 | 3 | 4 | 5) printf ". "
+        0 | 1 | 2 | 3 | 4 | 5) printf "."
             ;;
-        6) printf "? "
+        6) printf "?"
             ;;
     esac
 }
 
-myrandom() {
-    head -c 1 /dev/urandom | od -A n -d | sed -e "s/ \+//g"
-}
-
 printrandompar() {
     # In the original paragraphs there are 4 or 5 sentences
-    NSENTENCE=$((4 + RANDOM % 2))
+    NSENTENCE=$(myrandom 2 4)
     while [ "$NSENTENCE" -gt 0 ]
     do
         # In the original sentences there are 8-29 words. (The 40 word sentence
         # is an outlier, check with a boxplot.)
-        NWORDS=$((8 + RANDOM % 22))
-        toupper "$(word $((RANDOM % 210)))"
+        NWORDS=$(myrandom 22 8)
+        printf "  "
+        toupper "$(randomword)"
         while [ "$NWORDS" -gt 0 ]
         do
-            printf " %s" "$(word $((RANDOM % 210)))"
+            printf " %s" "$(randomword)"
             NWORDS=$((NWORDS - 1))
         done
-        punctuation "$((RANDOM % 7))"
+        punctuation "$(myrandom 7 0)"
         NSENTENCE=$((NSENTENCE - 1))
     done
 }
@@ -291,19 +294,19 @@ printpars() {
     while [ "$NPAR" -gt 0 ]
     do
         echo
-        printrandompar | prettify
-        NPAR=$((NPAR - 1))
-    done
-}
+            printrandompar | prettify
+            NPAR=$((NPAR - 1))
+        done
+    }
 
-SCRIPTNAME=$(basename "$0")
+    SCRIPTNAME=$(basename "$0")
 
-usage() {
-    echo "Usage: $SCRIPTNAME [ -p POSINT ]" >&2
-}
+    usage() {
+        echo "Usage: $SCRIPTNAME [ -p POSINT ]" >&2
+    }
 
-# If there was no argument given, then just printlipsum and exit
-[ -z "$*" ] && printlipsum | prettify && exit 0
+    # If there was no argument given, then just printlipsum and exit
+    [ -z "$*" ] && printlipsum | prettify && exit 0
 
 # We need it to be set, otherwise later the checks will complain
 NPAR=0
