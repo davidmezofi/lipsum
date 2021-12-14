@@ -247,7 +247,7 @@ EOF
 }
 
 prettify() {
-    tr '\n' ' ' | sed -e "s/^ *//; s/ \{2,\}/  /g" | fold -s
+    tr '\n' ' ' | sed -e 's/^ *//; s/\([.?]\) \+/\1  /g' | fold -s
     echo
 }
 
@@ -269,7 +269,7 @@ printrandompar() {
         # In the original sentences there are 8-29 words. (The 40 word sentence
         # is an outlier, check with a boxplot.)
         NWORDS=$(myrandom 21 8)
-        printf "  "
+        printf " "
         randomword | sed -e "s/\(.*\)/\u\1/"
         while [ "$NWORDS" -gt 0 ]
         do
