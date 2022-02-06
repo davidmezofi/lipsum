@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright 2021 Dávid Csaba Mezőfi
+# Copyright 2021, 2022 Dávid Csaba Mezőfi
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License.  You may obtain a copy
@@ -13,6 +13,70 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 # License for the specific language governing permissions and limitations under
 # the License.
+
+usage() {
+    echo "Usage: lipsum.sh [-p number]" >&2
+}
+
+if ! TEMP=$(getopt -o '+p:' -n "lipsum.sh" -- "$@")
+then
+    echo "lipsum.sh:  Error during parsing options." >&2 
+    exit 1
+fi
+
+eval set -- "$TEMP"
+unset TEMP
+NPAR=0
+while true
+do
+    case "$1" in
+        '-p')
+            echo "$2" | grep -q -v "^[1-9][0-9]*$" && {
+                echo "lipsum.sh:  -p requires a positive integer as an argument." >&2
+                exit 2
+            }
+            NPAR=$2
+            shift 2
+            continue
+        ;;
+        '--')
+            shift
+            break
+        ;;
+        *)
+            echo "lipsum.sh:  Error during parsing options." >&2 
+            usage
+            exit 1
+        ;;
+    esac
+done
+
+[ $# -gt 0 ] && {
+    echo "lipsum.sh:  too many arguments." >&2
+    usage
+    exit 2
+}
+
+printlipsum() {
+    cat << EOF
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+culpa qui officia deserunt mollit anim id est laborum.
+EOF
+}
+
+prettify() {
+    tr '\n' ' ' | sed -e 's/^ *//; s/\([.?]\) \+/\1  /g' | fold -s
+    echo
+}
+
+[ "$NPAR" -le 1 ] && {
+    printlipsum | prettify
+    exit 0
+}
 
 myrandom() {
     SEED=$(od -A n -N 2 -d /dev/urandom)
@@ -235,39 +299,22 @@ randomword() {
     esac
 }
 
-printlipsum() {
-    cat << EOF
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
-EOF
-}
-
-prettify() {
-    tr '\n' ' ' | sed -e 's/^ *//; s/\([.?]\) \+/\1  /g' | fold -s
-    echo
-}
-
 punctuation() {
     INDEX=$(myrandom 7 0)
     case "$INDEX" in
-        0 | 1 | 2 | 3 | 4 | 5) printf "."
+        0 | 1 | 2 | 3 | 4 | 5)
+            printf "."
             ;;
-        6) printf "?"
+        6)
+            printf "?"
             ;;
     esac
 }
 
 printrandompar() {
-    # In the original paragraphs there are 4 or 5 sentences
-    NSENTENCE=$(myrandom 2 4)
-    while [ "$NSENTENCE" -gt 0 ]
+    NSENTENCES=$(myrandom 2 4)
+    while [ "$NSENTENCES" -gt 0 ]
     do
-        # In the original sentences there are 8-29 words. (The 40 word sentence
-        # is an outlier, check with a boxplot.)
         NWORDS=$(myrandom 21 8)
         printf " "
         randomword | sed -e "s/\(.*\)/\u\1/"
@@ -278,64 +325,25 @@ printrandompar() {
             NWORDS=$((NWORDS - 1))
         done
         punctuation
-        NSENTENCE=$((NSENTENCE - 1))
+        NSENTENCES=$((NSENTENCES - 1))
     done
 }
 
 printpars() {
-    NPAR=$(($1 - 1))
-
+    NPARS=$(($1 - 1))
     printlipsum | prettify
-
-    while [ "$NPAR" -gt 0 ]
+    while [ "$NPARS" -gt 0 ]
     do
         echo
             printrandompar | prettify
-            NPAR=$((NPAR - 1))
+            NPARS=$((NPARS - 1))
         done
-    }
-
-SCRIPTNAME=$(basename "$0")
-
-usage() {
-    echo "Usage: $SCRIPTNAME [ -p POSINT ]" >&2
 }
 
-# If there was no argument given, then just printlipsum and exit
-[ -z "$*" ] && printlipsum | prettify && exit 0
+[ "$NPAR" -gt 1 ] && {
+    printpars "$NPAR"
+    exit 0
+}
 
-# We need it to be set, otherwise later the checks will complain
-NPAR=0
-
-# The following option handling comes from getopt-example.bash
-TEMP=$(getopt -o 'p:' -n "$SCRIPTNAME" -- "$@")
-eval set -- "$TEMP"
-unset TEMP
-
-while true
-do
-    case "$1" in
-        '-p')
-            echo "$2" | grep -q -v "[1-9][0-9]*" \
-                && echo "$SCRIPTNAME: -p requires a positive number as an argument" >&2\
-                && exit 1
-            NPAR=$2
-            shift 2
-            continue
-        ;;
-        '--')
-            shift
-            break
-        ;;
-        *)
-            usage
-            exit 3
-        ;;
-    esac
-done
-
-[ -n "$*" ] && echo "$SCRIPTNAME: too many arguments" >&2 && usage && exit 2
-[ "$NPAR" -eq 1 ] && printlipsum | prettify && exit 0
-[ "$NPAR" -gt 1 ] && printpars "$NPAR" && exit 0
-
-usage && exit 3
+echo "lipsum.sh:  Some error occurred." >&2
+exit 3
